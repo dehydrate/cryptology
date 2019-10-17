@@ -6,7 +6,7 @@ main = interact breakSolveReassemble
     breakSolveReassemble string = unlines . map handle . lines $ string
 
 isValid :: String -> Bool
-isValid string = foldl (&&) True . map (validChar) $ string
+isValid = and . map validChar
     where
         validChar c = (Char.isLetter c) || (c == ' ')
 
