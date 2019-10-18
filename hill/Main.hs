@@ -2,9 +2,11 @@ import Break
 import Parse
 import Hill
 import System.Environment
+import qualified StringLib
 import qualified Text.Read as Text
 import qualified Data.Maybe as Maybe
 
+-- still need to use StringLib to check validity of input strings
 main = do
     args <- getArgs
     let (m, rest) = extractMode args 
@@ -51,15 +53,14 @@ validInput _ _ texts input
 extractKey :: [String] -> ([String], [String])
 extractKey = extractInfix "-k" 4
 
--- takes a list such as ["-k", "1", "2", "3", "5"] and reads it as a Maybe key
 readKey :: [String] -> Maybe Key
 readKey [] = Nothing
 readKey strings
     | length valids /= 4    = Nothing
     | otherwise             = Just valids
     where
-    maybeints = map Text.readMaybe (tail strings) :: [Maybe Int]
-    valids = Maybe.catMaybes maybeints
+        maybeints = map Text.readMaybe (tail strings) :: [Maybe Int]
+        valids = Maybe.catMaybes maybeints
 
 extractMode :: [String] -> ([String], [String])
 extractMode = extractInfix "-m" 1
