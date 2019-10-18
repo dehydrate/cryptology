@@ -7,6 +7,7 @@ import qualified Text.Read as Text
 import qualified Data.Maybe as Maybe
 
 
+-- not thrilled with this way of validating the char set, but it'll do for now
 main = do
     args <- getArgs
     let (m, rest)           = extractMode args 
@@ -16,15 +17,17 @@ main = do
         key                 = readKey k
         texts               = readTexts t
         (argsValid, reason) = validInput mode key texts input
-    if not $ validText (input ++ texts)
-        then putStrLn "Invalid characters in input texts"
-    else if argsValid
+    if argsValid && validText (input ++ texts)
         then case (Maybe.fromJust mode) of
             "encrypt"   -> putStrLn $ cautiousCipher encrypt (Maybe.fromJust key) (prep $ head input) 
             "decrypt"   -> putStrLn $ cautiousCipher decrypt (Maybe.fromJust key) (prep $ head input)
             "crack"     -> putStrLn $ cautiousAttack (map prep texts)
-    else
+    else do
         putStrLn reason
+        if not $ validText (input ++ texts)
+            then putStrLn "Invalid characters in input text"
+        else
+            return ()
 
 
 
