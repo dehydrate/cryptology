@@ -3,6 +3,7 @@ module Hill
 , decrypt
 , validKey
 , Key
+, prettyKey
 , matrixInverse
 , leftMultiplyMatrix
 ) where
@@ -16,6 +17,13 @@ import qualified Data.Maybe as Maybe
 --  (a b)
 --  (c d)
 type Key = [Int]
+
+-- better would be to pad the matrix elements
+prettyKey :: Key -> String
+prettyKey [a, b, c, d] = 
+    "(" ++ show a ++ " " ++ show b ++ ")" ++ "\n" ++ 
+    "(" ++ show c ++ " " ++ show c ++ ")"
+
 
 validKey :: Key -> Bool
 validKey = Maybe.isJust . matrixInverse
