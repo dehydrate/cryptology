@@ -18,12 +18,12 @@ main = do
         (valid, reason) = validInput mode key texts input
     if valid
         then case (Maybe.fromJust mode) of
-            -- need a more sophisticated way to report results
             "encrypt"   -> putStrLn $ cautiousCipher encrypt (Maybe.fromJust key) (head input) 
             "decrypt"   -> putStrLn $ cautiousCipher decrypt (Maybe.fromJust key) (head input)
             "crack"     -> putStrLn $ cautiousSolve texts
     else
         putStrLn reason
+
 
 cautiousSolve :: [String] -> String
 cautiousSolve [cipher, plain]
@@ -36,6 +36,7 @@ cautiousCipher f key text
     | Maybe.isNothing result    = "Invalid key"
     | otherwise                 = Maybe.fromJust result
     where result = f key text
+
 
 type JustifiedBool = (Bool, String)
 
@@ -50,17 +51,17 @@ validInput _ _ texts input
     | length texts == 0 && length input == 1    = (True, "")
     | otherwise                                 = (False, "Input text error")
 
+
 extractKey :: [String] -> ([String], [String])
 extractKey = extractInfix "-k" 4
 
 readKey :: [String] -> Maybe Key
-readKey [] = Nothing
 readKey strings
-    | length valids /= 4    = Nothing
+    | length justints /= 4    = Nothing
     | otherwise             = Just valids
     where
         maybeints = map Text.readMaybe (tail strings) :: [Maybe Int]
-        valids = Maybe.catMaybes maybeints
+        justints = Maybe.catMaybes maybeints
 
 extractMode :: [String] -> ([String], [String])
 extractMode = extractInfix "-m" 1
@@ -74,5 +75,5 @@ extractTexts :: [String] -> ([String], [String])
 extractTexts = extractInfix "-t" 2
 
 readTexts :: [String] -> [String]
-readTexts [] = []
-readTexts list = tail list
+readTexts []    = []
+readTexts list  = tail list

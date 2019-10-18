@@ -1,5 +1,5 @@
 module StringLib
-( indexOf
+( indexOf -- this and nth aren't really used except in the Chao cipher
 , nth
 , toCode
 , toChar
@@ -18,7 +18,6 @@ indexOf (x:xs) y
     | x == y    = 0
     | otherwise = 1 + (indexOf xs y)
 
--- no way to indicate failure without using a Maybe
 nth :: (Eq a) => [a] -> Int -> a
 nth (x:xs) n
     | n == 0    = x
