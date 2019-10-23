@@ -33,17 +33,17 @@ toChar :: Int -> Char
 toChar = nth ['a'..'z']
 
 toString :: [Int] -> String
-toString nums = map toChar nums
+toString = map toChar
 
 toVector :: String -> [Int]
-toVector string = map toCode string
+toVector = map toCode
 
 
 -- input validation/preprocessing
 
 isValid :: String -> Bool
-isValid string = all validChar string
+isValid = all validChar
     where validChar c = (Char.isLetter c) || (c == ' ')
 
 prep :: String -> String
-prep string = filter (/= ' ') . map Char.toLower $ string
+prep = filter (/= ' ') . map Char.toLower
