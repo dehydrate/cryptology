@@ -1,10 +1,11 @@
 # Hill
 
-Implementation of the Hill cipher with a 2x2 matrix. The Hill cipher
-encrypts a plaintext by multiplying each block of n characters by an
-invertible n by n key matrix.
+Command line program implementing the Hill cipher with a 2x2 matrix.
+The Hill cipher encrypts a plaintext by multiplying each block of n
+characters by an invertible n by n key matrix.
 
 Syntax:
+
 	# compile
 	ghc Main.hs -o hill
 
