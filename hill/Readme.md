@@ -5,18 +5,18 @@ encrypts a plaintext by multiplying each block of n characters by an
 invertible n by n key matrix.
 
 Syntax:
-	$ # compile
-	$ ghc Main.hs -o hill
-	$
-	$ # a b c d are key matrix elements
-	$ # to encrypt: 
-	$ ./hill -k a b c d -m encrypt myplaintext
-	$
-	$ # to decrypt: 
-	$ ./hill -k a b c d -m decrypt myciphertext
-	$
-	$ # to execute a known plaintext/known ciphertext attack:
-	$ ./hill -m crack -t myciphertext myplaintext
+	# compile
+	ghc Main.hs -o hill
+
+	# a b c d are key matrix elements
+	# to encrypt: 
+	./hill -k a b c d -m encrypt myplaintext
+	
+	# to decrypt: 
+	./hill -k a b c d -m decrypt myciphertext
+	
+	# to execute a known plaintext/known ciphertext attack:
+	./hill -m crack -t myciphertext myplaintext
 
 
 # Flags:
