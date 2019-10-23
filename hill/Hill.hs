@@ -23,7 +23,7 @@ type Key = [Int]
 prettyKey :: Key -> String
 prettyKey [a, b, c, d] = 
     "(" ++ show a ++ " " ++ show b ++ ")" ++ "\n" ++ 
-    "(" ++ show c ++ " " ++ show c ++ ")"
+    "(" ++ show c ++ " " ++ show d ++ ")"
 
 validKey :: Key -> Bool
 validKey = Maybe.isJust . matrixInverse
