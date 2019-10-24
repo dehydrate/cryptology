@@ -49,7 +49,7 @@ type Vector = [Int]
 
 textToVectors :: String -> [Vector]
 textToVectors []            = []
-textToVectors [x]           = textToVectors (x:"padding")   -- add an odd number of letters
+textToVectors [x]           = textToVectors (x:"x")   -- add an odd number of letters
 textToVectors (a:b:tail)    = (toVector [a,b]) : textToVectors tail
 
 vectorsToText :: [Vector] -> String

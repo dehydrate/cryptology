@@ -7,7 +7,7 @@ import qualified Text.Read as Text
 import qualified Data.Maybe as Maybe
 
 
--- not thrilled with this way of validating the char set, but it'll do for now
+-- not thrilled with this way of reading and validating input, but it'll do for now
 main = do
     args <- getArgs
     let (m, rest)           = extractMode args 
@@ -21,7 +21,7 @@ main = do
         then case (Maybe.fromJust mode) of
             "encrypt"   -> putStrLn $ cautiousCipher encrypt (Maybe.fromJust key) (prep $ head input) 
             "decrypt"   -> putStrLn $ cautiousCipher decrypt (Maybe.fromJust key) (prep $ head input)
-            "crack"     -> putStrLn $ cautiousAttack (map prep texts)
+            "crack"     -> attackInteract (prep (head texts)) (prep (last texts))
     else do
         putStrLn reason
         if not $ validText (input ++ texts)
@@ -30,12 +30,25 @@ main = do
             return ()
 
 
+attackInteract :: String -> String -> IO ()
+attackInteract ciphertext plainfrag = cycle options
+    where 
+        options = bestKeys ciphertext plainfrag
+        cycle :: [Key] -> IO ()
+        cycle keys = do
+            if null keys
+                then putStrLn "Not enough information to determine key"
+            else let (h:t) = keys in do 
+                putStrLn "Key:"
+                putStrLn . prettyKey $ h
+                putStrLn "Plaintext:"
+                putStrLn . Maybe.fromJust . decrypt h $ ciphertext
+                putStr "Continue testing keys? (y/n [n]) "
+                response <- getLine
+                if response == "y"
+                    then cycle t
+                else return ()
 
-cautiousAttack :: [String] -> String
-cautiousAttack [cipher, plain]
-    | Maybe.isNothing result    = "Not enough text to determine key"
-    | otherwise                 = "Key:\n" ++ (prettyKey $ Maybe.fromJust result)
-    where result = getKey cipher plain
 
 cautiousCipher :: (Key -> String -> Maybe String) -> Key -> String -> String
 cautiousCipher f key text

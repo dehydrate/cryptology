@@ -1,7 +1,8 @@
-module Break (getKey) where
+module Break (bestKeys) where
 
 import Hill
 import StringLib
+import Stats
 import qualified Data.Maybe as Maybe
 import qualified Data.List as List
 
@@ -27,7 +28,7 @@ getKey ct pt =
         key (ct, pt) = leftMultiplyMatrix <$> pure ct <*> fmap toColumns pt
 
         results' = map (fmap uncolumns . key) matrixPairs
-        results = Maybe.catMaybes results'
+        results = filter validKey . Maybe.catMaybes $ results'
 
     in if not (null results)
         then Just (head results)    -- all the Just values in results should be identical
@@ -37,3 +38,32 @@ block :: [a] -> [[a]]
 block [] = []
 block [_] = []
 block (a:b:rest) = [a,b] : block rest
+
+bestKeys :: String -> String -> [Key]
+bestKeys ciphertext plainfrag =
+    List.sortBy (criteria) $ keyOptions ciphertext plainfrag
+    where
+        decrypt' k = Maybe.fromJust $ decrypt k ciphertext
+        criteria k1 k2
+            | badness (decrypt' k1) < badness (decrypt' k2) = LT
+            | badness (decrypt' k2) < badness (decrypt' k1) = GT
+            | otherwise                                     = EQ
+    
+
+keyOptions :: String -> String -> [Key]
+keyOptions ciphertext plainfrag =
+    Maybe.catMaybes $ zipWith getKey (candidates ciphertext plainfrag) (repeat plainfrag)
+
+candidates :: String -> String -> [String]
+candidates whole fragment = 
+    let l = length fragment 
+    in Maybe.catMaybes . walk (maybetake l) $ whole
+
+walk :: ([a] -> b) -> [a] -> [b]
+walk f []   = []
+walk f list = f list : walk f (tail list)
+
+maybetake :: Int -> [a] -> Maybe [a]
+maybetake 0 _       = Just []
+maybetake _ []      = Nothing
+maybetake n (x:xs)  = (x:) <$> maybetake (n-1) xs
