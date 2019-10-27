@@ -33,7 +33,9 @@ main = do
 attackInteract :: String -> String -> IO ()
 attackInteract ciphertext plainfrag =
     if length keys == 1 then do
-        putStrLn "Only one possibility:"
+        putStrLn "Only one possibile key:" 
+        putStrLn . prettyKey $ head keys
+        putStrLn "Plaintext:"
         putStrLn . Maybe.fromJust . decrypt (head keys) $ ciphertext
     else do
         putStrLn "Multiple solutions; please select best:"
