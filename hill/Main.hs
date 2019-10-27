@@ -31,22 +31,27 @@ main = do
 
 
 attackInteract :: String -> String -> IO ()
-attackInteract ciphertext plainfrag = cycle options
+attackInteract ciphertext plainfrag =
+    if length keys == 1 then do
+        putStrLn "Only one possibility:"
+        putStrLn . Maybe.fromJust . decrypt (head keys) $ ciphertext
+    else do
+        putStrLn "Multiple solutions; please select best:"
+        inputcycle keys
     where 
-        options = bestKeys ciphertext plainfrag
-        cycle :: [Key] -> IO ()
-        cycle keys = do
+        keys = bestKeys ciphertext plainfrag
+        inputcycle :: [Key] -> IO ()
+        inputcycle keys = do
             if null keys
                 then putStrLn "Not enough information to determine key"
             else let (h:t) = keys in do 
                 putStrLn "Key:"
                 putStrLn . prettyKey $ h
-                putStrLn "Plaintext:"
+                putStrLn "Plaintext (press y to continue testing keys):"
                 putStrLn . Maybe.fromJust . decrypt h $ ciphertext
-                putStr "Continue testing keys? (y/n [n]) "
                 response <- getLine
                 if response == "y"
-                    then cycle t
+                    then inputcycle t
                 else return ()
 
 
@@ -57,24 +62,25 @@ cautiousCipher f key text
     where result = f key text
 
 
+-- input validation
 
 type JustifiedBool = (Bool, String)
 
 validInput :: Maybe String -> Maybe Key -> [String] -> [String] -> JustifiedBool
 validInput Nothing _ _ _                        = (False, "Mode input error")
 validInput (Just "crack") _ texts input 
-    | length texts == 2 && length input == 0    = (True, "")
+    | length texts == 2 && length input == 0    = (True, "Peter Piper picked")
     | otherwise                                 = (False, "Input text error")
 validInput _ Nothing _ _                        = (False, "Key input error")
 validInput _ _ texts input
-    | length texts == 2 && length input == 0    = (True, "")
-    | length texts == 0 && length input == 1    = (True, "")
+    | length texts == 0 && length input == 1    = (True, "a peck of pickled")
     | otherwise                                 = (False, "Input text error")
 
 validText :: [String] -> Bool
 validText = all isValid
 
 
+-- input parsing
 
 extractKey :: [String] -> ([String], [String])
 extractKey = extractInfix "-k" 4

@@ -18,6 +18,7 @@ indexOf (x:xs) y
     | x == y    = 0
     | otherwise = 1 + (indexOf xs y)
 
+-- fails on the empty list
 nth :: (Eq a) => [a] -> Int -> a
 nth (x:xs) n
     | n == 0    = x

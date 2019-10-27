@@ -18,11 +18,10 @@ condense (x:xs)
     where
         (n, y):rest = condense xs
 
--- tabulates absolute frequency of each char in the string
+-- bucket and normalize tabulate the frequency of each char in the string
 bucket :: (Ord a) => [a] -> [(Int, a)]
 bucket string = condense . List.sort $ string
 
--- converts absolute frequencies of bucket to proportions
 normalize :: (Ord a) => [a] -> [(a, Float)]
 normalize string = map (\(count, char) -> (char, toFrequency count)) . bucket $ string
     where
@@ -33,15 +32,12 @@ normalize string = map (\(count, char) -> (char, toFrequency count)) . bucket $ 
 badness :: String -> Float 
 badness string = 
     foldl 
-        (\acc (key, freq) -> acc + abs (freq - defaultLookup key normalized)) 
+        (\acc (key, freq) -> acc + abs (freq - Map.findWithDefault 0 key normalized))
         0 
         english
     where
         normalized = Map.fromList . normalize $ string
         unwrap (Just x) = x
-        defaultLookup key table
-            | Map.lookup key table == Nothing   = 0
-            | otherwise                         = unwrap $ Map.lookup key table
 
 -- English letter frequencies
 english =
@@ -77,5 +73,5 @@ english =
 indexOfCoincidence string =
     let n = fromIntegral . length $ string
         freqs = bucket string
-        sum = fromIntegral . foldl (\acc (x, _) -> acc + x*(x-1)) 0 $ freqs
+        sum = fromIntegral $ foldl (\ acc (x, _) -> acc + x*(x-1)) 0 freqs
     in sum / (n*(n-1))

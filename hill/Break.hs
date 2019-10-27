@@ -14,25 +14,28 @@ import qualified Data.List as List
 
 -- known plaintext/known ciphertext attack to get the encryption key
 getKey :: String -> String -> Maybe Key
-getKey ct pt = 
-    let pairs = zip (block $ toVector ct) (block $ toVector pt)
+getKey ct pt
+    | unanimous keys    = Just . uncolumns . head $ keys
+    | otherwise         = Nothing
+    where
+        pairs = zip (block $ toVector pt) (block $ toVector ct)
+        pairpairs = [ (p1, p2) | p1 <- pairs, p2 <- pairs ]
+        keys = Maybe.catMaybes $ map (uncurry key) pairpairs
+        unanimous l = length (List.nub l) == 1
 
-        matrixPairs =
-            [ ([c1, c3, c2, c4], matrixInverse [p1, p3, p2, p4]) | 
-                  ([c1, c2], [p1, p2]) <- pairs 
-                , ([c3, c4], [p3, p4]) <- pairs ]  
-               
-        toColumns [a, b, c, d] = [[a, c], [b, d]]
-        uncolumns [[a, c], [b, d]] = [a, b, c, d]
+toColumns :: Key -> [Vector]
+toColumns [a, b, c, d] = [[a, c], [b, d]]
 
-        key (ct, pt) = leftMultiplyMatrix <$> pure ct <*> fmap toColumns pt
+uncolumns :: [Vector] -> Key
+uncolumns [[a, c], [b, d]] = [a, b, c, d]
 
-        results' = map (fmap uncolumns . key) matrixPairs
-        results = filter validKey . Maybe.catMaybes $ results'
+key :: (Vector, Vector) -> (Vector, Vector) -> Maybe [Vector]
+key (p1, c1) (p2, c2) =
+    let plain   = uncolumns [p1, p2]
+        cipher  = uncolumns [c1, c2]
+        pinv    = matrixInverse plain
+    in pinv >>= return . toColumns >>= return . leftMultiplyMatrix cipher
 
-    in if not (null results)
-        then Just (head results)    -- all the Just values in results should be identical
-        else Nothing
 
 block :: [a] -> [[a]]
 block [] = []
@@ -49,7 +52,6 @@ bestKeys ciphertext plainfrag =
             | badness (decrypt' k2) < badness (decrypt' k1) = GT
             | otherwise                                     = EQ
     
-
 keyOptions :: String -> String -> [Key]
 keyOptions ciphertext plainfrag =
     Maybe.catMaybes $ zipWith getKey (candidates ciphertext plainfrag) (repeat plainfrag)
