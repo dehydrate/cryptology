@@ -21,9 +21,9 @@ main = do
         then case (Maybe.fromJust mode) of
             "encrypt"   -> putStrLn $ cautiousCipher encrypt (Maybe.fromJust key) (prep $ head input) 
             "decrypt"   -> putStrLn $ cautiousCipher decrypt (Maybe.fromJust key) (prep $ head input)
-            "crack"     -> attackInteract (prep (head texts)) (prep (last texts))
+            "crack"     -> attackInteract (prep $ head texts) (prep $ last texts)
     else do
-        putStrLn reason
+        putStrLn reason -- this throws the pointless Peter Piper message in response to an invalid character
         if not $ validText (input ++ texts)
             then putStrLn "Invalid characters in input text"
         else
@@ -36,6 +36,8 @@ attackInteract ciphertext plainfrag =
         putStrLn "Only one possibile key:" 
         putStrLn . prettyKey $ head keys
         putStrLn "Plaintext:"
+        -- this can go wrong if the plaintext is very short: the program may
+        -- get a single invalid key, causing a Maybe.fromJust: Nothing error
         putStrLn . Maybe.fromJust . decrypt (head keys) $ ciphertext
     else do
         putStrLn "Multiple solutions; please select best:"

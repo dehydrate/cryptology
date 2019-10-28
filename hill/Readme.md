@@ -4,7 +4,7 @@ Command line program implementing the Hill cipher with a 2x2 matrix.
 The Hill cipher encrypts a plaintext by multiplying each block of n
 characters by an invertible n by n key matrix.
 
-Syntax:
+## Usage:
 
 	# compile
 	ghc Main.hs -o hill
@@ -20,10 +20,10 @@ Syntax:
 	./hill -m crack -t {myciphertext} {myplaintext}
 
 
-# Flags:
+### Flags:
 
 * -m	Specify mode: encrypt, decrypt, or crack. Must be included.
-* -k	Specify key: four integers a b c d, such that the key is
+* -k	Specify key: four integers a b c d, representing a key matrix
 			(a b)
 			(c d)
 * -t	Specify ciphertext and plaintext to extract a key. Note that
