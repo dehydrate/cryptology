@@ -20,7 +20,8 @@ getKey ct pt
     where
         pairs       = zip (block $ toVector pt) (block $ toVector ct)
         pairpairs   = [ (p1, p2) | p1 <- pairs, p2 <- pairs ]
-        keys        = Maybe.catMaybes $ map (uncurry key) pairpairs
+        keys'       = Maybe.catMaybes $ map (uncurry key) pairpairs
+        keys        = filter validKey keys'
         -- the only way to get multiple possible keys from a "known" plaintext/ciphertext
         -- combo is if the ciphertext actually does NOT correspond to the plaintext.
         -- in other words, this indicates when the plaintext fragment was misaligned with 
