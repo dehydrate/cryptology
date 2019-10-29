@@ -57,7 +57,7 @@ bestKeys ciphertext plainfrag =
             | badness (decrypt' k1) < badness (decrypt' k2) = LT
             | badness (decrypt' k2) < badness (decrypt' k1) = GT
             | otherwise                                     = EQ
- 
+
 -- now that getKey identifies and filters out bad plaintext/ciphertext alignment,
 -- this is unlikely to produce many keys, but it's still possible
 keyOptions :: String -> String -> [Key]

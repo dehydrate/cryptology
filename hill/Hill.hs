@@ -67,9 +67,11 @@ leftMultiplyMatrix key = map (leftMultiplyBlock key)
 
 
 encrypt, decrypt :: Key -> String -> Maybe String
+
 encrypt k string
     | validKey k    = Just . vectorsToText . leftMultiplyMatrix k . textToVectors $ string
     | otherwise     = Nothing
+
 decrypt k string = 
 --  (fmap vectorsToText . leftMultiplyMatrix) <$> matrixInverse k <*> pure (textToVectors string)
 --  equivalent, sightly more readable:
