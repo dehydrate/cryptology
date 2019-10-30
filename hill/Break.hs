@@ -77,7 +77,11 @@ keyOptions ct pf =
     let evenKeys        = M.catMaybes $ zipWith getKey (candidates ct pf) (repeat pf) -- pf is even aligned
         oddKeys         = M.catMaybes $ zipWith getKey (candidates ct $ tail pf) (repeat $ tail pf) -- pf is odd aligned
         decrypt' (k, a) = M.fromJust $ alignedDecrypt a k ct
-    in filter (\ k -> List.isInfixOf pf (decrypt' k)) (evenKeys ++ oddKeys)
+    in filter (\ k -> List.isInfixOf pf (decrypt' k)) evenKeys ++
+       filter (\ k -> List.isInfixOf (tail pf) (decrypt' k)) oddKeys -- we need the two different filters because an
+                                                                     -- odd aligned fragment from the front of the 
+                                                                     -- plaintext will have a fundamentally 
+                                                                     -- unrecoverable first letter
 
 -- finds every substring in the ciphertext that could be matched to the plaintext
 candidates :: String -> String -> [CipherFragment]
