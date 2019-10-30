@@ -31,10 +31,10 @@ main = do
 
 
 -- not the most succinct approach, but it seems to take care of all the cases
+-- if ciphertext has an odd length, we don't try to decrypt the last character
+-- this choice really should be getting made in the decryption algorithms
 attackInteract :: String -> String -> IO ()
-attackInteract ciphertext plainfrag 
-    | odd (length ciphertext)   = inputCycle (init ciphertext) (bestKeys ciphertext plainfrag)
-    | otherwise                 = inputCycle ciphertext (bestKeys ciphertext plainfrag)
+attackInteract ciphertext plainfrag = inputCycle ciphertext (bestKeys ciphertext plainfrag)
 
 inputCycle :: String -> [AlignedKey] -> IO ()
 inputCycle ciphertext keys

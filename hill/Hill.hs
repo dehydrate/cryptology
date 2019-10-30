@@ -81,9 +81,17 @@ encrypt k string
     | validKey k    = Just . vectorsToText . leftMultiplyMatrix k . textToVectors $ string
     | otherwise     = Nothing
 
-decrypt k string = 
-    leftMultiplyMatrix <$> matrixInverse k <*> pure (textToVectors string) >>= return . vectorsToText
+-- naive decrypt assumes the first two characters of the string are a full block
+decrypt k string
+    | odd (length string)   = d (tail string)
+    | otherwise             = d string
+     where
+        d string = leftMultiplyMatrix <$> matrixInverse k <*> pure (textToVectors string) >>= return . vectorsToText
 
 alignedDecrypt :: Alignment -> Key -> String -> Maybe String
+-- alignedDecrypt with an even alignment is just naive decrypt
 alignedDecrypt Even k string    = decrypt k string
-alignedDecrypt Odd k string     = decrypt k (tail string)
+-- alignedDecrypt with an odd alignment means you can't decrypt the first character, maybe also the last
+alignedDecrypt Odd k string
+    | odd (length string)   = decrypt k (tail string)
+    | otherwise             = decrypt k . init . tail $ string

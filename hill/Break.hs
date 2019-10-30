@@ -3,7 +3,7 @@ module Break (bestKeys) where
 import Hill
 import StringLib
 import Stats
-import qualified Data.Maybe as Maybe
+import qualified Data.Maybe as M
 import qualified Data.List as List
 
 type CipherFragment = (String, Alignment)
@@ -24,7 +24,7 @@ getKey ct pt
         (ct', align)    = ct
         pairs           = zip (block $ toVector pt) (block $ toVector ct')
         pairpairs       = [ (p1, p2) | p1 <- pairs, p2 <- pairs ]
-        keys'           = Maybe.catMaybes $ map (uncurry key) pairpairs
+        keys'           = M.catMaybes $ map (uncurry key) pairpairs
         keys            = List.nub keys'
         -- these both catch a few cases where the alignment was wrong
         fails           = (not . validKey) (head keys)
@@ -55,7 +55,7 @@ bestKeys :: String -> String -> [AlignedKey]
 bestKeys ciphertext plainfrag =
     List.sortBy (criteria) $ keyOptions ciphertext plainfrag
     where
-        decrypt' (k, a) = Maybe.fromJust $ alignedDecrypt a k ciphertext
+        decrypt' (k, a) = M.fromJust $ alignedDecrypt a k ciphertext
         criteria k1 k2
             | badness (decrypt' k1) < badness (decrypt' k2) = LT
             | badness (decrypt' k2) < badness (decrypt' k1) = GT
@@ -73,16 +73,17 @@ bestKeys ciphertext plainfrag =
 -- keyOptions, you eliminate all the keys that don't have the plaintext fragment as an infix of the 
 -- ciphertext after decryption.
 keyOptions :: String -> String -> [AlignedKey]
-keyOptions ciphertext plainfrag =
-    let keys            = Maybe.catMaybes $ zipWith getKey (candidates ciphertext plainfrag) (repeat plainfrag)
-        decrypt' (k, a) = Maybe.fromJust $ alignedDecrypt a k ciphertext
-    in filter (\ k -> List.isInfixOf plainfrag (decrypt' k)) keys
+keyOptions ct pf =
+    let evenKeys        = M.catMaybes $ zipWith getKey (candidates ct pf) (repeat pf) -- pf is even aligned
+        oddKeys         = M.catMaybes $ zipWith getKey (candidates ct $ tail pf) (repeat $ tail pf) -- pf is odd aligned
+        decrypt' (k, a) = M.fromJust $ alignedDecrypt a k ct
+    in filter (\ k -> List.isInfixOf pf (decrypt' k)) (evenKeys ++ oddKeys)
 
 -- finds every substring in the ciphertext that could be matched to the plaintext
 candidates :: String -> String -> [CipherFragment]
 candidates ciphertext plainfrag = 
     let l           = length plainfrag 
-        substrings  = Maybe.catMaybes $ walk (maybetake l) ciphertext
+        substrings  = M.catMaybes $ walk (maybetake l) ciphertext
     in zip substrings (cycle [Even, Odd])
 
 -- friend to scan: walk through a list while applying f to what's left at each step
