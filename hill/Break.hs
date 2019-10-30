@@ -63,7 +63,8 @@ bestKeys ciphertext plainfrag =
 -- this is unlikely to produce many keys, but it's still possible
 keyOptions :: String -> String -> [Key]
 keyOptions ciphertext plainfrag =
-    Maybe.catMaybes $ zipWith getKey (candidates ciphertext plainfrag) (repeat plainfrag)
+    let keys    = Maybe.catMaybes $ zipWith getKey (candidates ciphertext plainfrag) (repeat plainfrag)
+    in keys
 
 -- finds every substring in the ciphertext that could be matched to the plaintext
 candidates :: String -> String -> [String]

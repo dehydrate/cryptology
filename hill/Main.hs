@@ -23,41 +23,31 @@ main = do
             "decrypt"   -> putStrLn $ cautiousCipher decrypt (Maybe.fromJust key) (prep $ head input)
             "crack"     -> attackInteract (prep $ head texts) (prep $ last texts)
     else do
-        putStrLn reason -- this throws the pointless Peter Piper message in response to an invalid character
         if not $ validText (input ++ texts)
             then putStrLn "Invalid characters in input text"
         else
-            return ()
+            putStrLn reason
+        return ()
 
 
+-- not the most succinct approach, but it seems to take care of all the cases
 attackInteract :: String -> String -> IO ()
-attackInteract ciphertext plainfrag =
-    if length keys == 1 then do
-        putStrLn "Only one possibile key:" 
-        putStrLn . prettyKey $ head keys
-        putStrLn "Plaintext:"
-        -- this can go wrong if the plaintext is very short: the program may
-        -- get a single invalid key, causing a Maybe.fromJust: Nothing error
-        putStrLn . Maybe.fromJust . decrypt (head keys) $ ciphertext
-    else do
-        putStrLn "Multiple solutions; please select best:"
-        inputcycle keys
-    where 
-        keys = bestKeys ciphertext plainfrag
-        inputcycle :: [Key] -> IO ()
-        inputcycle keys = do
-            if null keys
-                then putStrLn "Not enough information to determine key"
-            else let (h:t) = keys in do 
-                putStrLn "Key:"
-                putStrLn . prettyKey $ h
-                putStrLn "Plaintext (press y to continue testing keys):"
-                putStrLn . Maybe.fromJust . decrypt h $ ciphertext
-                response <- getLine
-                if response == "y"
-                    then inputcycle t
-                else return ()
+attackInteract ciphertext plainfrag = inputCycle ciphertext (bestKeys ciphertext plainfrag)
 
+inputCycle :: String -> [Key] -> IO ()
+inputCycle ciphertext keys
+    | null keys             = putStrLn "Not enough information to determine key"
+    | length keys == 1      = printSolution (head keys)
+    | otherwise             = printSolution (head keys) >> putStr "Continue y/n: " >> getLine >>= continue
+    where
+        continue choice
+            | choice == "y"     = inputCycle ciphertext (tail keys)
+            | otherwise         = return ()
+        printSolution key = do
+            putStrLn "Key:"
+            putStrLn $ prettyKey key
+            putStrLn "Plaintext:"
+            putStrLn . Maybe.fromJust $ decrypt key ciphertext
 
 cautiousCipher :: (Key -> String -> Maybe String) -> Key -> String -> String
 cautiousCipher f key text
@@ -91,8 +81,9 @@ extractKey = extractInfix "-k" 4
 
 readKey :: [String] -> Maybe Key
 readKey strings
-    | length justs /= 4  = Nothing
-    | otherwise             = Just justs
+    | null strings      = Nothing
+    | length justs /= 4 = Nothing
+    | otherwise         = Just justs
     where
         maybes  = map Text.readMaybe (tail strings) :: [Maybe Int]
         justs   = Maybe.catMaybes maybes
