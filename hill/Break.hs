@@ -17,9 +17,9 @@ type CipherFragment = (String, Alignment)
 -- known plaintext/known ciphertext attack to get the encryption key
 getKey :: CipherFragment -> String -> Maybe AlignedKey
 getKey ct pt
-    | fails             = Nothing
-    | singleton keys    = Just (head keys, align)
-    | otherwise         = Nothing
+    | not singleton = Nothing
+    | fails         = Nothing
+    | otherwise     = Just (head keys, align)
     where
         (ct', align)    = ct
         pairs           = zip (block $ toVector pt) (block $ toVector ct')
@@ -27,8 +27,8 @@ getKey ct pt
         keys'           = Maybe.catMaybes $ map (uncurry key) pairpairs
         keys            = List.nub keys'
         -- these both catch a few cases where the alignment was wrong
-        fails           = any (not . validKey) keys
-        singleton l     = length l == 1
+        fails           = (not . validKey) (head keys)
+        singleton       = length keys == 1
 
 toColumns :: Key -> [Vector]
 toColumns [a, b, c, d] = [[a, c], [b, d]]
@@ -61,6 +61,17 @@ bestKeys ciphertext plainfrag =
             | badness (decrypt' k2) < badness (decrypt' k1) = GT
             | otherwise                                     = EQ
 
+-- A key is plausible if, when you use it to decrypt the ciphertext, you get basically the plaintext
+-- back. There are two places to check for this: here and in getKey.
+--
+-- It's a little faster computation-wise to do it in getKey, because you just use the head of keys' to
+-- decrypt the CipherFragment, then compare it to the plaintext fragment: if they match, add it to the
+-- list of options. This is guaranteed to catch the right key at some point (because when the 
+-- alignment is right, every key you calculate from any valid pair of blocks will be the same correct
+-- key). But it also lets a few more answers through, because you have to give the last letter of the 
+-- key a pass if the plaintext fragment is of odd length. If instead you check for this property in
+-- keyOptions, you eliminate all the keys that don't have the plaintext fragment as an infix of the 
+-- ciphertext after decryption.
 keyOptions :: String -> String -> [AlignedKey]
 keyOptions ciphertext plainfrag =
     let keys            = Maybe.catMaybes $ zipWith getKey (candidates ciphertext plainfrag) (repeat plainfrag)
@@ -71,7 +82,7 @@ keyOptions ciphertext plainfrag =
 candidates :: String -> String -> [CipherFragment]
 candidates ciphertext plainfrag = 
     let l           = length plainfrag 
-        substrings  = Maybe.catMaybes . walk (maybetake l) $ ciphertext
+        substrings  = Maybe.catMaybes $ walk (maybetake l) ciphertext
     in zip substrings (cycle [Even, Odd])
 
 -- friend to scan: walk through a list while applying f to what's left at each step
