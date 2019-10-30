@@ -63,7 +63,9 @@ bestKeys ciphertext plainfrag =
 
 keyOptions :: String -> String -> [AlignedKey]
 keyOptions ciphertext plainfrag =
-    Maybe.catMaybes $ zipWith getKey (candidates ciphertext plainfrag) (repeat plainfrag)
+    let keys            = Maybe.catMaybes $ zipWith getKey (candidates ciphertext plainfrag) (repeat plainfrag)
+        decrypt' (k, a) = Maybe.fromJust $ alignedDecrypt a k ciphertext
+    in filter (\ k -> List.isInfixOf plainfrag (decrypt' k)) keys
 
 -- finds every substring in the ciphertext that could be matched to the plaintext
 candidates :: String -> String -> [CipherFragment]

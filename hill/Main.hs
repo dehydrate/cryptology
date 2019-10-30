@@ -32,16 +32,19 @@ main = do
 
 -- not the most succinct approach, but it seems to take care of all the cases
 attackInteract :: String -> String -> IO ()
-attackInteract ciphertext plainfrag = inputCycle ciphertext (bestKeys ciphertext plainfrag)
+attackInteract ciphertext plainfrag 
+    | odd (length ciphertext)   = inputCycle (init ciphertext) (bestKeys ciphertext plainfrag)
+    | otherwise                 = inputCycle ciphertext (bestKeys ciphertext plainfrag)
 
 inputCycle :: String -> [AlignedKey] -> IO ()
 inputCycle ciphertext keys
     | null keys             = putStrLn "Not enough information to determine key"
     | length keys == 1      = printSolution (head keys)
-    | otherwise             = printSolution (head keys) >> putStr "Continue y/n: " >> getLine >>= continue
+    | otherwise             = putStrLn "(More options; press n for next or any key to exit)" >> 
+                              printSolution (head keys) >> getLine >>= continue
     where
         continue choice
-            | choice == "y"     = inputCycle ciphertext (tail keys)
+            | choice == "n"     = inputCycle ciphertext (tail keys)
             | otherwise         = return ()
         printSolution (key, alignment) = do
             putStrLn "Key:"
