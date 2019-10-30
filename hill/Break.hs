@@ -6,6 +6,8 @@ import Stats
 import qualified Data.Maybe as Maybe
 import qualified Data.List as List
 
+type CipherFragment = (String, Alignment)
+
 -- If the list [a, b, c, d] represents the matrix
 --      (a b)
 --      (c d)
@@ -13,20 +15,20 @@ import qualified Data.List as List
 -- which makes the code below somewhat confusing.
 
 -- known plaintext/known ciphertext attack to get the encryption key
-getKey :: String -> String -> Maybe Key
+getKey :: CipherFragment -> String -> Maybe AlignedKey
 getKey ct pt
-    | unanimous keys    = Just (head keys)
+    | fails             = Nothing
+    | singleton keys    = Just (head keys, align)
     | otherwise         = Nothing
     where
-        pairs       = zip (block $ toVector pt) (block $ toVector ct)
-        pairpairs   = [ (p1, p2) | p1 <- pairs, p2 <- pairs ]
-        keys'       = Maybe.catMaybes $ map (uncurry key) pairpairs
-        keys        = filter validKey keys'
-        -- the only way to get multiple possible keys from a "known" plaintext/ciphertext
-        -- combo is if the ciphertext actually does NOT correspond to the plaintext.
-        -- in other words, this indicates when the plaintext fragment was misaligned with 
-        -- the ciphertext
-        unanimous l = length (List.nub l) == 1
+        (ct', align)    = ct
+        pairs           = zip (block $ toVector pt) (block $ toVector ct')
+        pairpairs       = [ (p1, p2) | p1 <- pairs, p2 <- pairs ]
+        keys'           = Maybe.catMaybes $ map (uncurry key) pairpairs
+        keys            = List.nub keys'
+        -- these both catch a few cases where the alignment was wrong
+        fails           = any (not . validKey) keys
+        singleton l     = length l == 1
 
 toColumns :: Key -> [Vector]
 toColumns [a, b, c, d] = [[a, c], [b, d]]
@@ -49,28 +51,26 @@ block (a:b:rest) = [a,b] : block rest
 
 -- in the unlikely event that keyOptions finds multiple possible keys,
 -- bestKeys sorts them in order of likelihood using good old badness
-bestKeys :: String -> String -> [Key]
+bestKeys :: String -> String -> [AlignedKey]
 bestKeys ciphertext plainfrag =
     List.sortBy (criteria) $ keyOptions ciphertext plainfrag
     where
-        decrypt' k = Maybe.fromJust $ decrypt k ciphertext
+        decrypt' (k, a) = Maybe.fromJust $ alignedDecrypt a k ciphertext
         criteria k1 k2
             | badness (decrypt' k1) < badness (decrypt' k2) = LT
             | badness (decrypt' k2) < badness (decrypt' k1) = GT
             | otherwise                                     = EQ
 
--- now that getKey identifies and filters out bad plaintext/ciphertext alignment,
--- this is unlikely to produce many keys, but it's still possible
-keyOptions :: String -> String -> [Key]
+keyOptions :: String -> String -> [AlignedKey]
 keyOptions ciphertext plainfrag =
-    let keys    = Maybe.catMaybes $ zipWith getKey (candidates ciphertext plainfrag) (repeat plainfrag)
-    in keys
+    Maybe.catMaybes $ zipWith getKey (candidates ciphertext plainfrag) (repeat plainfrag)
 
 -- finds every substring in the ciphertext that could be matched to the plaintext
-candidates :: String -> String -> [String]
-candidates whole fragment = 
-    let l = length fragment 
-    in Maybe.catMaybes . walk (maybetake l) $ whole
+candidates :: String -> String -> [CipherFragment]
+candidates ciphertext plainfrag = 
+    let l           = length plainfrag 
+        substrings  = Maybe.catMaybes . walk (maybetake l) $ ciphertext
+    in zip substrings (cycle [Even, Odd])
 
 -- friend to scan: walk through a list while applying f to what's left at each step
 walk :: ([a] -> b) -> [a] -> [b]

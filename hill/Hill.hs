@@ -1,12 +1,15 @@
 module Hill
 ( encrypt
 , decrypt
+, alignedDecrypt
 , validKey
-, Key
-, Vector
 , prettyKey
 , matrixInverse
 , leftMultiplyMatrix
+, Alignment (Even, Odd)
+, AlignedKey
+, Key
+, Vector
 ) where
 
 import Math
@@ -15,10 +18,16 @@ import qualified Data.List as List
 import qualified Data.Maybe as Maybe
 
 
+
 -- keys are 2x2 matrices, represented as 4-length lists: [a, b, c, d] means
 --  (a b)
 --  (c d)
 type Key = [Int]
+
+-- this allows us to tell the decryption algorithm that the first block is incomplete
+data Alignment  = Even | Odd deriving (Show)
+type AlignedKey = (Key, Alignment)
+
 
 -- better would be to pad the matrix elements
 prettyKey :: Key -> String
@@ -73,6 +82,8 @@ encrypt k string
     | otherwise     = Nothing
 
 decrypt k string = 
---  (fmap vectorsToText . leftMultiplyMatrix) <$> matrixInverse k <*> pure (textToVectors string)
---  equivalent, sightly more readable:
     leftMultiplyMatrix <$> matrixInverse k <*> pure (textToVectors string) >>= return . vectorsToText
+
+alignedDecrypt :: Alignment -> Key -> String -> Maybe String
+alignedDecrypt Even k string    = decrypt k string
+alignedDecrypt Odd k string     = decrypt k (tail string)

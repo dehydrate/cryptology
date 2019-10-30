@@ -34,7 +34,7 @@ main = do
 attackInteract :: String -> String -> IO ()
 attackInteract ciphertext plainfrag = inputCycle ciphertext (bestKeys ciphertext plainfrag)
 
-inputCycle :: String -> [Key] -> IO ()
+inputCycle :: String -> [AlignedKey] -> IO ()
 inputCycle ciphertext keys
     | null keys             = putStrLn "Not enough information to determine key"
     | length keys == 1      = printSolution (head keys)
@@ -43,11 +43,11 @@ inputCycle ciphertext keys
         continue choice
             | choice == "y"     = inputCycle ciphertext (tail keys)
             | otherwise         = return ()
-        printSolution key = do
+        printSolution (key, alignment) = do
             putStrLn "Key:"
             putStrLn $ prettyKey key
             putStrLn "Plaintext:"
-            putStrLn . Maybe.fromJust $ decrypt key ciphertext
+            putStrLn . Maybe.fromJust $ alignedDecrypt alignment key ciphertext
 
 cautiousCipher :: (Key -> String -> Maybe String) -> Key -> String -> String
 cautiousCipher f key text
