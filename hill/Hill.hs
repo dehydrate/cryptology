@@ -25,7 +25,7 @@ import qualified Data.Maybe as Maybe
 type Key = [Int]
 
 -- this allows us to tell the decryption algorithm that the first block is incomplete
-data Alignment  = Even | Odd deriving (Show)
+data Alignment  = Even | Odd deriving (Show, Eq)
 type AlignedKey = (Key, Alignment)
 
 
